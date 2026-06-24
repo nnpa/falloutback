@@ -1,6 +1,6 @@
 -- ======================================================
 -- DUMP БАЗЫ ДАННЫХ CALORIE_TRACKER
--- Версия: 2.0 (исправленная)
+-- Версия: 3.0 (с правильным порядком удаления)
 -- ======================================================
 
 -- Удаляем базу если существует
@@ -15,11 +15,16 @@ COLLATE utf8mb4_unicode_ci;
 USE `calorie_tracker`;
 
 -- ======================================================
--- ТАБЛИЦЫ
+-- ТАБЛИЦЫ (удаляем в правильном порядке)
 -- ======================================================
 
--- ---------- Таблица пользователей ----------
+-- Удаляем дочерние таблицы (сначала те, у которых есть внешние ключи)
+DROP TABLE IF EXISTS `food_intake`;
+DROP TABLE IF EXISTS `calories_burned`;
+DROP TABLE IF EXISTS `products`;
 DROP TABLE IF EXISTS `user`;
+
+-- ---------- Таблица пользователей ----------
 CREATE TABLE IF NOT EXISTS `user` (
     `id` INT(11) NOT NULL AUTO_INCREMENT,
     `device_key` VARCHAR(255) NOT NULL,
@@ -29,7 +34,6 @@ CREATE TABLE IF NOT EXISTS `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------- Таблица продуктов ----------
-DROP TABLE IF EXISTS `products`;
 CREATE TABLE IF NOT EXISTS `products` (
     `id` INT(11) NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
@@ -40,7 +44,6 @@ CREATE TABLE IF NOT EXISTS `products` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------- Таблица дневника питания ----------
-DROP TABLE IF EXISTS `food_intake`;
 CREATE TABLE IF NOT EXISTS `food_intake` (
     `id` INT(11) NOT NULL AUTO_INCREMENT,
     `user_id` INT(11) NOT NULL,
@@ -60,7 +63,6 @@ CREATE TABLE IF NOT EXISTS `food_intake` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------- Таблица сожженных калорий ----------
-DROP TABLE IF EXISTS `calories_burned`;
 CREATE TABLE IF NOT EXISTS `calories_burned` (
     `id` INT(11) NOT NULL AUTO_INCREMENT,
     `user_id` INT(11) NOT NULL,
@@ -150,7 +152,7 @@ CREATE INDEX idx_calories_burned_date ON calories_burned (`date`);
 CREATE INDEX idx_products_name ON products (`name`);
 
 -- ======================================================
--- ПРОЦЕДУРЫ (исправленные)
+-- ПРОЦЕДУРЫ
 -- ======================================================
 
 -- ---------- Процедура: Получить дневную статистику ----------
@@ -185,7 +187,7 @@ BEGIN
 END//
 DELIMITER ;
 
--- ---------- Процедура: Получить статистику за период (ИСПРАВЛЕННАЯ) ----------
+-- ---------- Процедура: Получить статистику за период ----------
 DROP PROCEDURE IF EXISTS `GetPeriodStats`;
 DELIMITER //
 CREATE PROCEDURE `GetPeriodStats`(
