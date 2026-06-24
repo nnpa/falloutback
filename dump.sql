@@ -1,10 +1,9 @@
 -- ======================================================
 -- DUMP БАЗЫ ДАННЫХ CALORIE_TRACKER
--- Версия: 1.0
--- Дата: 2026-06-24
+-- Версия: 2.0 (исправленная)
 -- ======================================================
 
--- Удаляем базу если существует (ОСТОРОЖНО! Удаляет все данные)
+-- Удаляем базу если существует
 -- DROP DATABASE IF EXISTS `calorie_tracker`;
 
 -- Создаем базу данных
@@ -151,7 +150,7 @@ CREATE INDEX idx_calories_burned_date ON calories_burned (`date`);
 CREATE INDEX idx_products_name ON products (`name`);
 
 -- ======================================================
--- ПРОЦЕДУРЫ
+-- ПРОЦЕДУРЫ (исправленные)
 -- ======================================================
 
 -- ---------- Процедура: Получить дневную статистику ----------
@@ -186,7 +185,7 @@ BEGIN
 END//
 DELIMITER ;
 
--- ---------- Процедура: Получить статистику за период ----------
+-- ---------- Процедура: Получить статистику за период (ИСПРАВЛЕННАЯ) ----------
 DROP PROCEDURE IF EXISTS `GetPeriodStats`;
 DELIMITER //
 CREATE PROCEDURE `GetPeriodStats`(
@@ -195,25 +194,33 @@ CREATE PROCEDURE `GetPeriodStats`(
     IN p_end_date DATE
 )
 BEGIN
+    -- Создаем временную таблицу с датами
+    CREATE TEMPORARY TABLE IF NOT EXISTS temp_dates (
+        date DATE
+    );
+    
+    -- Очищаем временную таблицу
+    TRUNCATE TABLE temp_dates;
+    
+    -- Заполняем даты циклом
+    WHILE p_start_date <= p_end_date DO
+        INSERT INTO temp_dates (date) VALUES (p_start_date);
+        SET p_start_date = DATE_ADD(p_start_date, INTERVAL 1 DAY);
+    END WHILE;
+    
+    -- Получаем статистику
     SELECT 
-        dates.date,
+        td.date,
         COALESCE(SUM(fi.calories), 0) as eaten,
         COALESCE(cb.calories, 0) as burned
-    FROM (
-        SELECT DATE_ADD(p_start_date, INTERVAL seq DAY) as date
-        FROM (
-            SELECT 
-                @seq := @seq + 1 AS seq
-            FROM 
-                information_schema.columns,
-                (SELECT @seq := -1) AS seq_init
-            LIMIT DATEDIFF(p_end_date, p_start_date) + 1
-        ) AS seq_table
-    ) dates
-    LEFT JOIN food_intake fi ON fi.date = dates.date AND fi.user_id = p_user_id
-    LEFT JOIN calories_burned cb ON cb.date = dates.date AND cb.user_id = p_user_id
-    GROUP BY dates.date
-    ORDER BY dates.date;
+    FROM temp_dates td
+    LEFT JOIN food_intake fi ON fi.date = td.date AND fi.user_id = p_user_id
+    LEFT JOIN calories_burned cb ON cb.date = td.date AND cb.user_id = p_user_id
+    GROUP BY td.date
+    ORDER BY td.date;
+    
+    -- Удаляем временную таблицу
+    DROP TEMPORARY TABLE IF EXISTS temp_dates;
 END//
 DELIMITER ;
 
