@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+</head>
+<body>
+    <button onclick="test()">Add Food</button>
+    <pre id="out"></pre>
+    <script>
+    async function test() {
+        const key = localStorage.getItem('deviceKey');
+        if (!key) {
+            // Регистрация
+            const r = await fetch('http://fit/user/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: '{}'
+            });
+            const d = await r.json();
+            if (d.success) localStorage.setItem('deviceKey', d.device_key);
+        }
+        
+        const deviceKey = localStorage.getItem('deviceKey');
+        document.getElementById('out').textContent = 'Device Key: ' + deviceKey;
+        
+        const res = await fetch('http://fit/foodintake', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Device-Key': deviceKey
+            },
+            body: JSON.stringify({ product_id: 1, grams: 100 })
+        });
+        const data = await res.json();
+        document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+    }
+    </script>
+</body>
+</html>
