@@ -1,15 +1,11 @@
 #!/usr/bin/env php
 <?php
 /**
- * Yii console bootstrap file.
- *
- * @link https://www.yiiframework.com/
- * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * Консоль Yii: php yii migrate, php yii seed/items, php yii maintenance/cleanup
  */
 
-defined('YII_DEBUG') or define('YII_DEBUG', true);
-defined('YII_ENV') or define('YII_ENV', 'dev');
+defined('YII_DEBUG') or define('YII_DEBUG', getenv('F2O_DEBUG') === '1');
+defined('YII_ENV') or define('YII_ENV', getenv('F2O_ENV') ?: 'prod');
 
 require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/vendor/yiisoft/yii2/Yii.php';
@@ -17,5 +13,4 @@ require __DIR__ . '/vendor/yiisoft/yii2/Yii.php';
 $config = require __DIR__ . '/config/console.php';
 
 $application = new yii\console\Application($config);
-$exitCode = $application->run();
-exit($exitCode);
+exit($application->run());
